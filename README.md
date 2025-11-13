@@ -1,6 +1,6 @@
 # Obsidian Plugins Collection
 
-A collection of powerful Obsidian plugins designed to enhance text navigation, manipulation, and automation within your notes. This repository contains two main plugins that streamline common text editing workflows in Obsidian.
+A collection of Obsidian plugins designed to enhance text navigation, manipulation, and automation within your notes. This repository contains two main plugins that streamline common text editing workflows in Obsidian.
 
 ## 🔧 Plugins Overview
 
@@ -10,7 +10,7 @@ Advanced navigation and manipulation for custom-delimited tags with nested suppo
 ### 2. **Snippet Expander**
 Intelligent text snippet expansion with customizable triggers for rapid content creation and templating.
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 - **Obsidian**: Version 1.4.0 or higher
@@ -43,11 +43,11 @@ Intelligent text snippet expansion with customizable triggers for rapid content 
    .obsidian/plugins/snippet-expander/
    ```
 
-## 🏷️ Hotkey Tag Navigator
+## Hotkey Tag Navigator
 
 Navigate and manipulate nested user-defined tags with advanced keyboard shortcuts and selection capabilities.
 
-### ✨ Features
+### Features
 - **Custom Delimiters**: Define your own tag delimiters (default: `|<` and `>|`)
 - **Nested Tag Support**: Handle complex nested tag structures
 - **Keyboard Navigation**: Jump between tags with configurable hotkeys
@@ -56,14 +56,14 @@ Navigate and manipulate nested user-defined tags with advanced keyboard shortcut
 - **Tag Removal**: Remove tags while preserving inner content.
 - **Debug Logging**: Optional console and file logging for troubleshooting
 
-### 🎯 Use Cases
+### Use Cases
 - **Template Navigation**: Move through placeholders in document templates
 - **Content Highlighting**: Mark and navigate important sections
 - **Form Fields**: Create fillable forms with navigable fields
 - **Code Snippets**: Navigate through variable placeholders
 - **Documentation**: Mark sections for review or completion
 
-### ⌨️ Default Hotkeys
+### Default Hotkeys
 - **Next Tag**: `Cmd/Ctrl + Shift + →`
 - **Previous Tag**: `Cmd/Ctrl + Shift + ←` 
 - **Select Inner Content**: `Cmd/Ctrl + Shift + I` 
@@ -77,14 +77,14 @@ Meeting scheduled for |<date>| at |<time>| in |<location>|.
 
 Navigate through tags using hotkeys to quickly fill in placeholders or review tagged content.
 
-### ⚙️ Configuration
+### Configuration
 Access settings through **Settings > Community Plugins > Hotkey Tag Navigator**:
 - Custom opening/closing delimiters
 - Wrap-around navigation toggle
 - Default inner content selection
 - Debug information display
 
-### 🔒 Limitations
+### Limitations
 - Only works in Markdown editing mode
 - Requires manual tag delimiter setup
 - Performance may degrade with extremely large documents (>10MB)
@@ -94,7 +94,7 @@ Access settings through **Settings > Community Plugins > Hotkey Tag Navigator**:
 
 Automatically expand predefined text snippets with customizable triggers for rapid content creation.
 
-### ✨ Features
+### Features
 - **Multiple Triggers**: Space, Tab, or Enter key expansion
 - **JSON Configuration**: External snippet definition file
 - **Inline Snippets**: Define snippets directly in documents
@@ -103,7 +103,7 @@ Automatically expand predefined text snippets with customizable triggers for rap
 - **Live Reload**: Automatic snippet updates when files change
 - **Manual Override**: Force expansion with command palette
 
-### 🎯 Use Cases
+### Use Cases
 - **Email Templates**: Quick insertion of common responses
 - **Code Boilerplate**: Instant code structure generation
 - **Meeting Notes**: Standardized meeting templates
@@ -112,7 +112,7 @@ Automatically expand predefined text snippets with customizable triggers for rap
 - **Academic Citations**: Quick citation format insertion
 
 
-### ⚙️ Configuration
+### Configuration
 Create a `snippets.json` file in your vault root:
 ```json
 {
@@ -131,7 +131,7 @@ Create a `snippets.json` file in your vault root:
 }
 ```
 
-### 🔧 Settings
+### Settings
 - **Trigger Keys**: Enable/disable Space, Tab, Enter triggers
 - **File Path**: Custom location for snippets.json
 - **Inline Parsing**: Parse snippets from current document
@@ -139,13 +139,13 @@ Create a `snippets.json` file in your vault root:
 - **Minimum Key Length**: Prevent short accidental matches
 - **Expansion Delay**: Milliseconds before checking for expansion
 
-### 🔒 Limitations
+### Limitations
 - Requires JSON file for external snippets
 - Performance impact with large snippet collections (>1000 snippets)
 - Inline snippet parsing may slow down large documents
 - No snippet variables/interpolation (planned feature)
 
-## 🛠️ Development
+## Development
 
 ### Building from Source
 ```bash
@@ -185,7 +185,7 @@ obsidian_plugins/
 └── README.md
 ```
 
-## 📋 System Requirements
+## System Requirements
 
 ### Runtime Requirements
 - **Obsidian**: v1.4.0+
@@ -199,7 +199,7 @@ obsidian_plugins/
 - **TypeScript**: v4.4.0+
 - **Git**: v2.20.0+
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
@@ -226,5 +226,5 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Created by**: [mkuprian](https://github.com/mkuprian)  
+**Created by**: [GreyHatDoc](https://github.com/GreyHatDoc)  
 **Last Updated**: November 2025
