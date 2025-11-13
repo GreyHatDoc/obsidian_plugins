@@ -2,7 +2,7 @@
 
 A collection of Obsidian plugins designed to enhance text navigation, manipulation, and automation within your notes. This repository contains two main plugins that streamline common text editing workflows in Obsidian.
 
-## 🔧 Plugins Overview
+## Plugins Overview
 
 ### 1. **Hotkey Tag Navigator** 
 Advanced navigation and manipulation for custom-delimited tags with nested support and keyboard-driven workflows.
@@ -69,7 +69,7 @@ Navigate and manipulate nested user-defined tags with advanced keyboard shortcut
 - **Select Inner Content**: `Cmd/Ctrl + Shift + I` 
 - **Remove Tag**: `Cmd/Ctrl + Shift + Backspace` 
 
-### 📝 Usage Example
+### Usage Example
 ```markdown
 I need to buy |<groceries>| and visit the |<bank>|.
 Meeting scheduled for |<date>| at |<time>| in |<location>|.
@@ -90,7 +90,7 @@ Access settings through **Settings > Community Plugins > Hotkey Tag Navigator**:
 - Performance may degrade with extremely large documents (>10MB)
 - Nested tags must use the same delimiter pair
 
-## 📄 Snippet Expander
+## Snippet Expander
 
 Automatically expand predefined text snippets with customizable triggers for rapid content creation.
 
@@ -212,7 +212,7 @@ obsidian_plugins/
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🐛 Issues & Support
+## Issues & Support
 
 - **Bug Reports**: Use GitHub Issues with detailed reproduction steps
 - **Feature Requests**: Open GitHub Issues with clear use case descriptions
