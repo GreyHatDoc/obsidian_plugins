@@ -1,6 +1,6 @@
 {
-  "openingTagDelimiter": "[[",
-  "closingTagDelimiter": "]]",
+  "openingTagDelimiter": "|<",
+  "closingTagDelimiter": ">|",
   "showDebugInfo": true,
   "wrapAroundEnabled": true,
   "selectInnerByDefault": false
