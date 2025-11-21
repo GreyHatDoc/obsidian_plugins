@@ -331,8 +331,9 @@ Documentation will appear here automatically when the code file changes.
                 sortAlphabetically: this.settings.sortAlphabetically,
             });
 
-            // Create output filename
-            const outputPath = `${file.basename} - Documentation.md`;
+            // Create output filename with path in same folder as file
+            const parentPath = file.parent ? file.parent.path : '';
+            const outputPath = parentPath ? `${parentPath}/${file.basename} - Documentation.md` : `${file.basename} - Documentation.md`;
             await this.app.vault.create(outputPath, markdown);
 
             new Notice(`Documentation created: ${outputPath}`);
