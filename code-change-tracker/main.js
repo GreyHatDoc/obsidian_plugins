@@ -175281,12 +175281,15 @@ var CodeFileSuggestModal = class extends import_obsidian5.SuggestModal {
   constructor(app, plugin) {
     super(app);
     this.plugin = plugin;
+    console.log("Parser registry:", plugin.parserRegistry);
     this.supportedExtensions = new Set(
-      Array.from(plugin.parserRegistry["parsers"].keys())
+      Array.from(plugin.parserRegistry["extensionMap"].keys())
     );
+    console.log("Supported extensions:", this.supportedExtensions);
   }
   getSuggestions(query) {
     const files = this.app.vault.getFiles();
+    console.log("All vault files:", files);
     const codeFiles = files.filter(
       (file) => this.supportedExtensions.has(file.extension)
     );
@@ -175617,7 +175620,8 @@ Documentation will appear here automatically when the code file changes.
         groupByType: this.settings.groupByType,
         sortAlphabetically: this.settings.sortAlphabetically
       });
-      const outputPath = `${file.basename} - Documentation.md`;
+      const parentPath = file.parent ? file.parent.path : "";
+      const outputPath = parentPath ? `${parentPath}/${file.basename} - Documentation.md` : `${file.basename} - Documentation.md`;
       await this.app.vault.create(outputPath, markdown);
       new import_obsidian7.Notice(`Documentation created: ${outputPath}`);
       const docFile = this.app.vault.getAbstractFileByPath(outputPath);

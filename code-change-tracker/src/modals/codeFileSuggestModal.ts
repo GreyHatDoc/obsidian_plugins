@@ -9,13 +9,16 @@ export class CodeFileSuggestModal extends SuggestModal<TFile> {
         super(app);
         this.plugin = plugin;
         // Get supported extensions from parser registry
+        console.log("Parser registry:", plugin.parserRegistry);
         this.supportedExtensions = new Set(
-            Array.from(plugin.parserRegistry['parsers'].keys())
+            Array.from(plugin.parserRegistry['extensionMap'].keys())
         );
+        console.log("Supported extensions:", this.supportedExtensions);
     }
 
     getSuggestions(query: string): TFile[] {
         const files = this.app.vault.getFiles();
+        console.log("All vault files:", files);
         const codeFiles = files.filter((file) =>
             this.supportedExtensions.has(file.extension)
         );
