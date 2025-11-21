@@ -175429,7 +175429,7 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
     });
     this.addCommand({
       id: "generate-docs-for-selected-file",
-      name: "Generate Documentation for Selected File",
+      name: "Generate Documentation for Selected Code File",
       callback: async () => {
         new CodeFileSuggestModal(this.app, this).open();
       }
