@@ -1,0 +1,9 @@
+{
+    "id": "code-change-tracker",
+    "name": "Code Change Tracker",
+    "version": "1.0.0",
+    "minAppVersion": "1.4.0",
+    "description": "Track changes in your code files and generate documentation based on code modifications.",
+    "author": "GreyHatDoc",
+    "isDesktopOnly": false
+}

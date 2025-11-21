@@ -1,17 +1,17 @@
 {
-  "name": "obsidian-snippet-expander",
+  "name": "obsidian-code-change-tracker",
   "version": "1.0.0",
-  "description": "Auto-expand text snippets without external dependencies",
+  "description": "Track changes in your code files and generate documentation based on code modifications.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-    "build": "tsc && node esbuild.config.mjs production"
+    "build": "tsc --noEmit && node esbuild.config.mjs production"
   },
   "keywords": [
     "obsidian",
     "plugin",
-    "snippets",
-    "text-expansion"
+    "code-documentation",
+    "code-change-tracking"
   ],
   "author": "GreyHatDoc",
   "license": "MIT",
@@ -21,8 +21,8 @@
     "@typescript-eslint/parser": "^5.2.0",
     "builtin-modules": "^3.2.0",
     "esbuild": "^0.25.11",
-    "obsidian": "^1.10.2-1",
+    "obsidian": "^1.10.3",
     "tslib": "2.3.1",
-    "typescript": "^4.4.4"
+    "typescript": "^4.9.5"
   }
 }
