@@ -173343,7 +173343,7 @@ __export(main_exports, {
   default: () => CodeDocumentationPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/parsers/parserRegistry.ts
 var ParserRegistry = class {
@@ -175310,8 +175310,49 @@ var CodeFileSuggestModal = class extends import_obsidian5.SuggestModal {
   }
 };
 
-// src/settings.ts
+// src/modals/codeFileSectionSuggestModal.ts
 var import_obsidian6 = require("obsidian");
+var CodeFileSectionSuggestModal = class extends import_obsidian6.SuggestModal {
+  constructor(app, plugin) {
+    super(app);
+    this.selectedFile = null;
+    this.plugin = plugin;
+    console.log("Parser registry:", plugin.parserRegistry);
+    this.supportedExtensions = new Set(
+      Array.from(plugin.parserRegistry["extensionMap"].keys())
+    );
+  }
+  getSelected() {
+    if (this.selectedFile) {
+      return this.selectedFile;
+    }
+    return null;
+  }
+  getSuggestions(query) {
+    const files = this.app.vault.getFiles();
+    console.log("All vault files:", files);
+    const codeFiles = files.filter(
+      (file) => this.supportedExtensions.has(file.extension)
+    );
+    if (!query) {
+      return codeFiles;
+    }
+    const lowerQuery = query.toLowerCase();
+    return codeFiles.filter(
+      (file) => file.path.toLowerCase().includes(lowerQuery)
+    );
+  }
+  renderSuggestion(file, el) {
+    el.createEl("div", { text: file.path });
+    el.createEl("small", { text: file.extension, cls: "code-file-extension" });
+  }
+  onChooseSuggestion(file, evt) {
+    return file;
+  }
+};
+
+// src/settings.ts
+var import_obsidian7 = require("obsidian");
 var DEFAULT_SETTINGS = {
   outputPath: "Code Documentation.md",
   includeComments: true,
@@ -175326,7 +175367,7 @@ var DEFAULT_SETTINGS = {
   showUpdateNotifications: true,
   autoInitializeWatches: true
 };
-var CodeDocSettingTab = class extends import_obsidian6.PluginSettingTab {
+var CodeDocSettingTab = class extends import_obsidian7.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -175335,39 +175376,39 @@ var CodeDocSettingTab = class extends import_obsidian6.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Code Documentation Settings" });
-    new import_obsidian6.Setting(containerEl).setName("Output file path").setDesc("Where to save the generated documentation").addText((text) => text.setPlaceholder("Code Documentation.md").setValue(this.plugin.settings.outputPath).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Output file path").setDesc("Where to save the generated documentation").addText((text) => text.setPlaceholder("Code Documentation.md").setValue(this.plugin.settings.outputPath).onChange(async (value) => {
       this.plugin.settings.outputPath = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Include comments").setDesc("Include code comments in the documentation").addToggle((toggle) => toggle.setValue(this.plugin.settings.includeComments).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Include comments").setDesc("Include code comments in the documentation").addToggle((toggle) => toggle.setValue(this.plugin.settings.includeComments).onChange(async (value) => {
       this.plugin.settings.includeComments = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Include git information").setDesc("Include commit history and contributors").addToggle((toggle) => toggle.setValue(this.plugin.settings.includeGitInfo).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Include git information").setDesc("Include commit history and contributors").addToggle((toggle) => toggle.setValue(this.plugin.settings.includeGitInfo).onChange(async (value) => {
       this.plugin.settings.includeGitInfo = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Include imports").setDesc("List all import statements").addToggle((toggle) => toggle.setValue(this.plugin.settings.includeImports).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Include imports").setDesc("List all import statements").addToggle((toggle) => toggle.setValue(this.plugin.settings.includeImports).onChange(async (value) => {
       this.plugin.settings.includeImports = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Group by type").setDesc("Group symbols by type (classes, functions, etc.)").addToggle((toggle) => toggle.setValue(this.plugin.settings.groupByType).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Group by type").setDesc("Group symbols by type (classes, functions, etc.)").addToggle((toggle) => toggle.setValue(this.plugin.settings.groupByType).onChange(async (value) => {
       this.plugin.settings.groupByType = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Sort alphabetically").setDesc("Sort symbols alphabetically within groups").addToggle((toggle) => toggle.setValue(this.plugin.settings.sortAlphabetically).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Sort alphabetically").setDesc("Sort symbols alphabetically within groups").addToggle((toggle) => toggle.setValue(this.plugin.settings.sortAlphabetically).onChange(async (value) => {
       this.plugin.settings.sortAlphabetically = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Exclude patterns").setDesc("Glob patterns to exclude (one per line)").addTextArea((text) => text.setPlaceholder("node_modules/**\n.git/**").setValue(this.plugin.settings.excludePatterns.join("\n")).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Exclude patterns").setDesc("Glob patterns to exclude (one per line)").addTextArea((text) => text.setPlaceholder("node_modules/**\n.git/**").setValue(this.plugin.settings.excludePatterns.join("\n")).onChange(async (value) => {
       this.plugin.settings.excludePatterns = value.split("\n").filter((p) => p.trim());
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Enable real-time watching").setDesc("Automatically watch code files and update documentation").addToggle((toggle) => toggle.setValue(this.plugin.settings.enableRealTimeWatch).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Enable real-time watching").setDesc("Automatically watch code files and update documentation").addToggle((toggle) => toggle.setValue(this.plugin.settings.enableRealTimeWatch).onChange(async (value) => {
       this.plugin.settings.enableRealTimeWatch = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Watch interval (ms)").setDesc("Debounce interval for file change detection").addText((text) => text.setPlaceholder("1000").setValue(String(this.plugin.settings.defaultWatchInterval)).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Watch interval (ms)").setDesc("Debounce interval for file change detection").addText((text) => text.setPlaceholder("1000").setValue(String(this.plugin.settings.defaultWatchInterval)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.defaultWatchInterval = num;
@@ -175378,7 +175419,7 @@ var CodeDocSettingTab = class extends import_obsidian6.PluginSettingTab {
 };
 
 // src/main.ts
-var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
+var CodeDocumentationPlugin = class extends import_obsidian8.Plugin {
   constructor() {
     super(...arguments);
     this.gitIntegration = null;
@@ -175444,7 +175485,7 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
         const file = view.file;
         if (!file) return;
         await this.updateCoordinator.initializeWatchesForFile(file);
-        new import_obsidian7.Notice(`Started watching code files for ${file.name}`);
+        new import_obsidian8.Notice(`Started watching code files for ${file.name}`);
       }
     });
     this.addCommand({
@@ -175454,14 +175495,14 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
         const file = view.file;
         if (!file) return;
         this.updateCoordinator.stopWatchesForFile(file);
-        new import_obsidian7.Notice(`Stopped watching code files for ${file.name}`);
+        new import_obsidian8.Notice(`Stopped watching code files for ${file.name}`);
       }
     });
     this.addCommand({
       id: "manual-update-section",
       name: "Manually Update Current Section",
       editorCallback: async (editor, view) => {
-        if (view instanceof import_obsidian7.MarkdownView) {
+        if (view instanceof import_obsidian8.MarkdownView) {
           await this.manualUpdateSection(editor, view);
         }
       }
@@ -175470,21 +175511,22 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
       id: "insert-code-watch-template",
       name: "Insert Code Watch Template",
       editorCallback: (editor) => {
-        this.insertCodeWatchTemplate(editor);
+        this.insertCodeWatchTemplate(editor, null);
       }
     });
-    this.registerEvent(
-      this.app.workspace.on("file-menu", (menu, file) => {
-        if (file instanceof import_obsidian7.TFile && file.extension === "md") {
-          menu.addItem((item) => {
-            item.setTitle("Start watching code files").setIcon("play").onClick(async () => {
-              await this.updateCoordinator.initializeWatchesForFile(file);
-              new import_obsidian7.Notice(`Started watching for ${file.name}`);
-            });
-          });
-        }
-      })
-    );
+    this.addCommand({
+      id: "insert-code-watch-template-selected",
+      name: "Insert Code Watch Template (Selected File)",
+      editorCallback: (editor) => {
+        let selModal = new CodeFileSectionSuggestModal(this.app, this);
+        let selectedFile = null;
+        selModal.open();
+        selModal.onClose = () => {
+          selectedFile = selModal.getSelected();
+        };
+        this.insertCodeWatchTemplate(editor, selectedFile);
+      }
+    });
     this.addSettingTab(new CodeDocSettingTab(this.app, this));
     console.log("Code Documentation Plugin loaded with real-time watching");
   }
@@ -175510,7 +175552,7 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
     const content = await this.app.vault.read(file);
     const sections = await this.sectionManager.getSections(file);
     if (sections.length === 0) {
-      new import_obsidian7.Notice("No code-watch sections found in this document");
+      new import_obsidian8.Notice("No code-watch sections found in this document");
       return;
     }
     let targetSection = null;
@@ -175522,7 +175564,7 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
       }
     }
     if (!targetSection) {
-      const menu = new import_obsidian7.Menu();
+      const menu = new import_obsidian8.Menu();
       for (const sectionId of sections) {
         menu.addItem((item) => {
           item.setTitle(`Update: ${sectionId}`).onClick(async () => {
@@ -175535,10 +175577,19 @@ var CodeDocumentationPlugin = class extends import_obsidian7.Plugin {
       await this.updateCoordinator.manualUpdate(file, targetSection);
     }
   }
-  insertCodeWatchTemplate(editor) {
+  insertCodeWatchTemplate(editor, file) {
+    let filePath;
+    if (file) {
+      filePath = file.path;
+      if (!filePath.startsWith("./") && !filePath.startsWith("/")) {
+        filePath = `./${filePath}`;
+      }
+    } else {
+      filePath = "./path/to/your/file.ts";
+    }
     const template = `---
 code-watch:
-  - path: "./path/to/your/file.ts"
+  - path: "${filePath}"
     section: "code-section-1"
     update-mode: "realtime"
 watch-interval: 1000
@@ -175554,11 +175605,11 @@ Documentation will appear here automatically when the code file changes.
 <!-- /code-watch-section -->
 `;
     editor.replaceRange(template, editor.getCursor());
-    new import_obsidian7.Notice("Code watch template inserted");
+    new import_obsidian8.Notice("Code watch template inserted");
   }
   // ... (keep existing generateDocumentation and generateDocumentationForFile methods)
   async generateDocumentation() {
-    const notice = new import_obsidian7.Notice("Scanning code files...", 0);
+    const notice = new import_obsidian8.Notice("Scanning code files...", 0);
     try {
       const analyses = await this.fileScanner.scanVaultDirectory({
         excludePatterns: this.settings.excludePatterns,
@@ -175587,14 +175638,14 @@ Documentation will appear here automatically when the code file changes.
       const outputPath = this.settings.outputPath || "Code Documentation.md";
       await this.app.vault.adapter.write(outputPath, markdown);
       notice.hide();
-      new import_obsidian7.Notice(`Documentation generated: ${outputPath}`);
+      new import_obsidian8.Notice(`Documentation generated: ${outputPath}`);
       const file = this.app.vault.getAbstractFileByPath(outputPath);
-      if (file instanceof import_obsidian7.TFile) {
+      if (file instanceof import_obsidian8.TFile) {
         await this.app.workspace.getLeaf().openFile(file);
       }
     } catch (error) {
       notice.hide();
-      new import_obsidian7.Notice("Error generating documentation");
+      new import_obsidian8.Notice("Error generating documentation");
       console.error(error);
     }
   }
@@ -175602,7 +175653,7 @@ Documentation will appear here automatically when the code file changes.
     try {
       const parser = this.parserRegistry.getParserForFile(file.path);
       if (!parser) {
-        new import_obsidian7.Notice(`No parser available for ${file.extension} files`);
+        new import_obsidian8.Notice(`No parser available for ${file.extension} files`);
         return;
       }
       const content = await this.app.vault.read(file);
@@ -175623,13 +175674,13 @@ Documentation will appear here automatically when the code file changes.
       const parentPath = file.parent ? file.parent.path : "";
       const outputPath = parentPath ? `${parentPath}/${file.basename} - Documentation.md` : `${file.basename} - Documentation.md`;
       await this.app.vault.create(outputPath, markdown);
-      new import_obsidian7.Notice(`Documentation created: ${outputPath}`);
+      new import_obsidian8.Notice(`Documentation created: ${outputPath}`);
       const docFile = this.app.vault.getAbstractFileByPath(outputPath);
-      if (docFile instanceof import_obsidian7.TFile) {
+      if (docFile instanceof import_obsidian8.TFile) {
         await this.app.workspace.getLeaf().openFile(docFile);
       }
     } catch (error) {
-      new import_obsidian7.Notice("Error generating documentation for file");
+      new import_obsidian8.Notice("Error generating documentation for file");
       console.error(error);
     }
   }
