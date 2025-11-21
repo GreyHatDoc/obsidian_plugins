@@ -3,11 +3,11 @@ import CodeDocumentationPlugin from '../main';
 
 export class CodeFileSectionSuggestModal extends SuggestModal<TFile> {
     plugin: CodeDocumentationPlugin;
+    resolvePromise: (value: TFile | null) => void;
     supportedExtensions: Set<string>;
     selectedFile: TFile | null = null;
 
-
-    constructor(app: any, plugin: CodeDocumentationPlugin) {
+    constructor(app: any, plugin: CodeDocumentationPlugin, resolve: (value: TFile | null) => void) {
         super(app);
         this.plugin = plugin;
         // Get supported extensions from parser registry
@@ -15,14 +15,13 @@ export class CodeFileSectionSuggestModal extends SuggestModal<TFile> {
         this.supportedExtensions = new Set(
             Array.from(plugin.parserRegistry['extensionMap'].keys())
         );
+        this.resolvePromise = resolve;
+    }
 
-    }
     getSelected(): TFile | null {
-        if (this.selectedFile) {
-            return this.selectedFile;
-        }
-        return null;
+        return this.selectedFile;
     }
+
     getSuggestions(query: string): TFile[] {
         const files = this.app.vault.getFiles();
         console.log("All vault files:", files);
@@ -46,6 +45,16 @@ export class CodeFileSectionSuggestModal extends SuggestModal<TFile> {
     }
 
     onChooseSuggestion(file: TFile, evt: MouseEvent | KeyboardEvent) {
-        return file;
+        this.selectedFile = file;
+        console.log("Chosen file:", file);
+        console.log("Selectted file set to:", this.selectedFile);
+        this.resolvePromise(file);
+    }
+
+    onClose() {
+        console.log("Modal is closing. Selected file before close:", this.selectedFile);
+        super.onClose();
+        console.log("Closing modal, selected file:", this.selectedFile);
+        this.resolvePromise(this.selectedFile);
     }
 }

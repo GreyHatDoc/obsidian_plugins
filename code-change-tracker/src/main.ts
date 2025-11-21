@@ -1,4 +1,3 @@
-
 import { Plugin, TFile, Notice, MarkdownView, Menu, Editor } from 'obsidian';
 import { ParserRegistry } from './parsers/parserRegistry';
 import { TypeScriptParser } from './parsers/typescriptParser';
@@ -139,13 +138,14 @@ export default class CodeDocumentationPlugin extends Plugin {
         this.addCommand({
             id: 'insert-code-watch-template-selected',
             name: 'Insert Code Watch Template (Selected File)',
-            editorCallback: (editor) => {
-                let selModal: typeof this.codeFileSectionSuggestModal = new CodeFileSectionSuggestModal(this.app, this);
-                let selectedFile: TFile | null = null;
-                selModal.open();
-                selModal.onClose = () => {
-                    selectedFile = selModal.getSelected();
-                }
+            editorCallback: async (editor) => {
+                const selectedFile = await new Promise<TFile | null>((resolve) => {
+                    const modal = new CodeFileSectionSuggestModal(this.app, this, resolve);
+                    console.log("Opening code file section suggest modal");
+                    modal.open();
+                });
+
+                console.log("Selected file:", selectedFile);
                 this.insertCodeWatchTemplate(editor, selectedFile);
             },
         });
@@ -226,12 +226,14 @@ export default class CodeDocumentationPlugin extends Plugin {
         if (file) {
             filePath = file.path;
             // If the file is in the vault root, ensure it starts with ./
+
             if (!filePath.startsWith('./') && !filePath.startsWith('/')) {
                 filePath = `./${filePath}`;
             }
         } else {
             filePath = './path/to/your/file.ts';
         }
+        console.log("Inserting template for file:", filePath);
         const template = `---
 code-watch:
   - path: "${filePath}"

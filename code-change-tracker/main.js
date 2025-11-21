@@ -175313,7 +175313,7 @@ var CodeFileSuggestModal = class extends import_obsidian5.SuggestModal {
 // src/modals/codeFileSectionSuggestModal.ts
 var import_obsidian6 = require("obsidian");
 var CodeFileSectionSuggestModal = class extends import_obsidian6.SuggestModal {
-  constructor(app, plugin) {
+  constructor(app, plugin, resolve2) {
     super(app);
     this.selectedFile = null;
     this.plugin = plugin;
@@ -175321,12 +175321,10 @@ var CodeFileSectionSuggestModal = class extends import_obsidian6.SuggestModal {
     this.supportedExtensions = new Set(
       Array.from(plugin.parserRegistry["extensionMap"].keys())
     );
+    this.resolvePromise = resolve2;
   }
   getSelected() {
-    if (this.selectedFile) {
-      return this.selectedFile;
-    }
-    return null;
+    return this.selectedFile;
   }
   getSuggestions(query) {
     const files = this.app.vault.getFiles();
@@ -175347,7 +175345,16 @@ var CodeFileSectionSuggestModal = class extends import_obsidian6.SuggestModal {
     el.createEl("small", { text: file.extension, cls: "code-file-extension" });
   }
   onChooseSuggestion(file, evt) {
-    return file;
+    this.selectedFile = file;
+    console.log("Chosen file:", file);
+    console.log("Selectted file set to:", this.selectedFile);
+    this.resolvePromise(file);
+  }
+  onClose() {
+    console.log("Modal is closing. Selected file before close:", this.selectedFile);
+    super.onClose();
+    console.log("Closing modal, selected file:", this.selectedFile);
+    this.resolvePromise(this.selectedFile);
   }
 };
 
@@ -175517,13 +175524,13 @@ var CodeDocumentationPlugin = class extends import_obsidian8.Plugin {
     this.addCommand({
       id: "insert-code-watch-template-selected",
       name: "Insert Code Watch Template (Selected File)",
-      editorCallback: (editor) => {
-        let selModal = new CodeFileSectionSuggestModal(this.app, this);
-        let selectedFile = null;
-        selModal.open();
-        selModal.onClose = () => {
-          selectedFile = selModal.getSelected();
-        };
+      editorCallback: async (editor) => {
+        const selectedFile = await new Promise((resolve2) => {
+          const modal = new CodeFileSectionSuggestModal(this.app, this, resolve2);
+          console.log("Opening code file section suggest modal");
+          modal.open();
+        });
+        console.log("Selected file:", selectedFile);
         this.insertCodeWatchTemplate(editor, selectedFile);
       }
     });
@@ -175587,6 +175594,7 @@ var CodeDocumentationPlugin = class extends import_obsidian8.Plugin {
     } else {
       filePath = "./path/to/your/file.ts";
     }
+    console.log("Inserting template for file:", filePath);
     const template = `---
 code-watch:
   - path: "${filePath}"
