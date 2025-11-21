@@ -10,6 +10,7 @@ import { MarkdownGenerator } from './generator/markdownGenerator';
 import { GitIntegration } from './watchers/gitWatcher';
 import { UpdateCoordinator } from './coordinators/updateCoordinator';
 import { SectionManager } from './section/sectionManager';
+import { CodeFileSuggestModal } from './modals/codeFileSuggestModal';
 import { CodeDocSettings, CodeDocSettingTab, DEFAULT_SETTINGS } from './settings';
 
 export default class CodeDocumentationPlugin extends Plugin {
@@ -20,6 +21,7 @@ export default class CodeDocumentationPlugin extends Plugin {
     gitIntegration: GitIntegration | null = null;
     updateCoordinator!: UpdateCoordinator;
     sectionManager!: SectionManager;
+    codeFileSuggestModal!: CodeFileSuggestModal;
 
     async onload() {
         await this.loadSettings();
@@ -85,7 +87,13 @@ export default class CodeDocumentationPlugin extends Plugin {
                 await this.generateDocumentationForFile(file);
             },
         });
-
+        this.addCommand({
+            id: 'generate-docs-for-selected-file',
+            name: 'Generate Documentation for Selected File',
+            callback: async () => {
+                new CodeFileSuggestModal(this.app, this).open();
+            },
+        });
         this.addCommand({
             id: 'start-watching-current',
             name: 'Start Watching Code Files (Current Document)',
