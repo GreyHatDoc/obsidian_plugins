@@ -11,6 +11,7 @@ import { GitIntegration } from './watchers/gitWatcher';
 import { UpdateCoordinator } from './coordinators/updateCoordinator';
 import { SectionManager } from './section/sectionManager';
 import { CodeFileSuggestModal } from './modals/codeFileSuggestModal';
+import { CodeFileSectionSuggestModal } from './modals/codeFileSectionSuggestModal';
 import { CodeDocSettings, CodeDocSettingTab, DEFAULT_SETTINGS } from './settings';
 
 export default class CodeDocumentationPlugin extends Plugin {
@@ -22,6 +23,7 @@ export default class CodeDocumentationPlugin extends Plugin {
     updateCoordinator!: UpdateCoordinator;
     sectionManager!: SectionManager;
     codeFileSuggestModal!: CodeFileSuggestModal;
+    codeFileSectionSuggestModal!: CodeFileSectionSuggestModal;
 
     async onload() {
         await this.loadSettings();
@@ -130,26 +132,23 @@ export default class CodeDocumentationPlugin extends Plugin {
             id: 'insert-code-watch-template',
             name: 'Insert Code Watch Template',
             editorCallback: (editor) => {
-                this.insertCodeWatchTemplate(editor);
+                this.insertCodeWatchTemplate(editor, null);
             },
         });
 
-        // Context menu
-        this.registerEvent(
-            this.app.workspace.on('file-menu', (menu, file) => {
-                if (file instanceof TFile && file.extension === 'md') {
-                    menu.addItem((item) => {
-                        item
-                            .setTitle('Start watching code files')
-                            .setIcon('play')
-                            .onClick(async () => {
-                                await this.updateCoordinator.initializeWatchesForFile(file);
-                                new Notice(`Started watching for ${file.name}`);
-                            });
-                    });
+        this.addCommand({
+            id: 'insert-code-watch-template-selected',
+            name: 'Insert Code Watch Template (Selected File)',
+            editorCallback: (editor) => {
+                let selModal: typeof this.codeFileSectionSuggestModal = new CodeFileSectionSuggestModal(this.app, this);
+                let selectedFile: TFile | null = null;
+                selModal.open();
+                selModal.onClose = () => {
+                    selectedFile = selModal.getSelected();
                 }
-            })
-        );
+                this.insertCodeWatchTemplate(editor, selectedFile);
+            },
+        });
 
         // Settings tab
         this.addSettingTab(new CodeDocSettingTab(this.app, this));
@@ -222,10 +221,20 @@ export default class CodeDocumentationPlugin extends Plugin {
         }
     }
 
-    private insertCodeWatchTemplate(editor: Editor): void {
+    private insertCodeWatchTemplate(editor: Editor, file: TFile | null): void {
+        let filePath: string;
+        if (file) {
+            filePath = file.path;
+            // If the file is in the vault root, ensure it starts with ./
+            if (!filePath.startsWith('./') && !filePath.startsWith('/')) {
+                filePath = `./${filePath}`;
+            }
+        } else {
+            filePath = './path/to/your/file.ts';
+        }
         const template = `---
 code-watch:
-  - path: "./path/to/your/file.ts"
+  - path: "${filePath}"
     section: "code-section-1"
     update-mode: "realtime"
 watch-interval: 1000
