@@ -175316,6 +175316,7 @@ var CodeFileSectionSuggestModal = class extends import_obsidian6.SuggestModal {
   constructor(app, plugin, resolve2) {
     super(app);
     this.selectedFile = null;
+    this.hasResolved = false;
     this.plugin = plugin;
     console.log("Parser registry:", plugin.parserRegistry);
     this.supportedExtensions = new Set(
@@ -175346,15 +175347,20 @@ var CodeFileSectionSuggestModal = class extends import_obsidian6.SuggestModal {
   }
   onChooseSuggestion(file, evt) {
     this.selectedFile = file;
+    this.hasResolved = true;
     console.log("Chosen file:", file);
-    console.log("Selectted file set to:", this.selectedFile);
+    console.log("Selected file set to:", this.selectedFile);
     this.resolvePromise(file);
   }
   onClose() {
     console.log("Modal is closing. Selected file before close:", this.selectedFile);
     super.onClose();
-    console.log("Closing modal, selected file:", this.selectedFile);
-    this.resolvePromise(this.selectedFile);
+    setTimeout(() => {
+      console.log("Closing modal, has resolved:", this.hasResolved);
+      if (!this.hasResolved) {
+        this.resolvePromise(null);
+      }
+    }, 0);
   }
 };
 
