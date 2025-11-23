@@ -1,7 +1,7 @@
 import { App, TFile, Notice } from 'obsidian';
 
 export interface SectionBoundary {
-    sectionId: string;
+    sectionPath: string;
     startLine: number;
     endLine: number;
     indentation: string;
@@ -13,7 +13,7 @@ export class SectionManager {
     /**
      * Find section boundaries in markdown content
      */
-    findSection(content: string, sectionId: string): SectionBoundary | null {
+    findSection(content: string, sectionPath: string): SectionBoundary | null {
         const lines = content.split('\n');
 
         let startLine = -1;
@@ -21,8 +21,8 @@ export class SectionManager {
         let indentation = '';
 
         // Look for section markers
-        const startMarker = `<!-- code-watch-section: ${sectionId} -->`;
-        const endMarker = `<!-- /code-watch-section -->`;
+        const startMarker = `<!-- code-watch: ${sectionPath} -->`;
+        const endMarker = `<!-- /code-watch -->`;
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -44,7 +44,7 @@ export class SectionManager {
         }
 
         return {
-            sectionId,
+            sectionPath,
             startLine,
             endLine,
             indentation,
@@ -56,16 +56,16 @@ export class SectionManager {
      */
     async replaceSection(
         file: TFile,
-        sectionId: string,
+        sectionPath: string,
         newContent: string
     ): Promise<boolean> {
         try {
             const content = await this.app.vault.read(file);
-            const section = this.findSection(content, sectionId);
+            const section = this.findSection(content, sectionPath);
 
             if (!section) {
-                console.warn(`Section not found: ${sectionId} in ${file.path}`);
-                new Notice(`Section "${sectionId}" not found in ${file.name}`);
+                console.warn(`Section not found: ${sectionPath} in ${file.path}`);
+                new Notice(`Section "${sectionPath}" not found in ${file.name}`);
                 return false;
             }
 
@@ -100,12 +100,12 @@ export class SectionManager {
             // Write back to file
             await this.app.vault.modify(file, newFileContent);
 
-            console.log(`Updated section "${sectionId}" in ${file.path}`);
+            console.log(`Updated section "${sectionPath}" in ${file.path}`);
             return true;
 
         } catch (error) {
             console.error(`Error updating section:`, error);
-            new Notice(`Failed to update section "${sectionId}"`);
+            new Notice(`Failed to update section "${sectionPath}"`);
             return false;
         }
     }
@@ -115,34 +115,34 @@ export class SectionManager {
      */
     async createSection(
         file: TFile,
-        sectionId: string,
+        sectionPath: string,
         title?: string
     ): Promise<boolean> {
         try {
             const content = await this.app.vault.read(file);
 
             // Check if section already exists
-            if (this.findSection(content, sectionId)) {
+            if (this.findSection(content, sectionPath)) {
                 return true; // Already exists
             }
 
             // Add section at the end
-            const sectionTitle = title || this.humanizeSectionId(sectionId);
+            const sectionTitle = title || this.humanizeSectionId(sectionPath);
             const newSection = [
                 '',
                 `## ${sectionTitle}`,
-                `<!-- code-watch-section: ${sectionId} -->`,
+                `<!-- code-watch: ${sectionPath} -->`,
                 '',
                 '*Documentation will appear here automatically*',
                 '',
-                `<!-- /code-watch-section -->`,
+                `<!-- /code-watch -->`,
                 '',
             ].join('\n');
 
             const newContent = content + newSection;
             await this.app.vault.modify(file, newContent);
 
-            console.log(`Created section "${sectionId}" in ${file.path}`);
+            console.log(`Created section "${sectionPath}" in ${file.path}`);
             new Notice(`Created section "${sectionTitle}" in ${file.name}`);
 
             return true;
@@ -156,8 +156,8 @@ export class SectionManager {
     /**
      * Convert section ID to human-readable title
      */
-    private humanizeSectionId(sectionId: string): string {
-        return sectionId
+    private humanizeSectionId(sectionPath: string): string {
+        return sectionPath
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
@@ -171,7 +171,7 @@ export class SectionManager {
         const lines = content.split('\n');
 
         const sections: string[] = [];
-        const sectionRegex = /<!-- code-watch-section: ([a-zA-Z0-9-_]+) -->/;
+        const sectionRegex = /<!-- code-watch: ([a-zA-Z0-9-_\.]+) -->/;
 
         for (const line of lines) {
             const match = line.match(sectionRegex);
