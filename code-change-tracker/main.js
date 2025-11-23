@@ -175601,6 +175601,9 @@ var CodeDocumentationPlugin = class extends import_obsidian8.Plugin {
       filePath = "./path/to/your/file.ts";
     }
     console.log("Inserting template for file:", filePath);
+    this.app.fileManager.processFrontMatter(this.app.workspace.getActiveFile(), (frontMatter) => {
+      console.log("Current frontmatter before insertion:", frontMatter);
+    });
     const template = `---
 code-watch:
   - path: "${filePath}"
