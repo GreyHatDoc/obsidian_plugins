@@ -1,3 +1,4 @@
+
 export interface CodeSymbol {
     name: string;
     type: 'class' | 'function' | 'method' | 'variable' | 'interface' | 'type' | 'enum' | 'namespace' | 'module' | 'struct';
@@ -32,6 +33,12 @@ export interface Parameter {
     optional?: boolean;
 }
 
+export interface fileMetaData {
+    filePath: string;
+    fileSize: number;
+    lastModified: Date;
+}
+
 export interface FileAnalysis {
     filePath: string;
     language: string;
@@ -40,6 +47,7 @@ export interface FileAnalysis {
     comments: CommentBlock[];
     lastModified: Date;
     gitInfo?: GitFileInfo;
+
 }
 
 export interface ImportStatement {
@@ -61,6 +69,7 @@ export abstract class CodeParser {
     abstract readonly extensions: string[];
 
     abstract parse(content: string, filePath: string): FileAnalysis;
+
 
     protected createLocation(
         filePath: string,

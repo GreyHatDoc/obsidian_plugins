@@ -35,6 +35,7 @@ export class CppParser extends CodeParser {
         const enums = this.extractEnums(processedContent, lines, filePath, comments);
         symbols.push(...enums);
 
+        // Extract metadata
         return {
             filePath,
             language: this.language,
