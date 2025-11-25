@@ -1,4 +1,4 @@
-import { CodeParser, FileAnalysis, CodeSymbol, CommentBlock, ImportStatement, Parameter } from './codeParser';
+import { CodeParser, ObjectInterface, FileAnalysis, CodeSymbol, CommentBlock, ImportStatement, Parameter } from './codeParser';
 
 export class CppParser extends CodeParser {
     readonly language = 'cpp';
@@ -8,10 +8,18 @@ export class CppParser extends CodeParser {
         const symbols: CodeSymbol[] = [];
         const comments: CommentBlock[] = [];
         const imports: ImportStatement[] = [];
-
+        const objectStart: number[] = []; // Stack to track object start line
+        const objectEnd: number[] = [];   // Stack to track object end line
+        const ObjectInterfaces: ObjectInterface[] = [];
         // Preprocess: remove strings and character literals to avoid false matches
         const processedContent = this.removeStringLiterals(content);
         const lines = content.split('\n');
+        // move to single loop for performance
+        // We will first extract includes and free comments
+        // For classes, functions, enums we will start by using the objectInterface and then parse to symbol using the interface start line and end line
+        // Since we want to put comments with the symbol we will only extract comments if objectstart and end are 0
+        // This will ensure that we only get comments that are not attached to any symbol
+        // We will also want to keep track of the position of comments to ensure we can attach them to symbol if they are immediately preceding
 
         // Extract includes
         this.extractIncludes(lines, filePath, imports);

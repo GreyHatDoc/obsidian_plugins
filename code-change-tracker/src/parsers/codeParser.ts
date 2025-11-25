@@ -2,35 +2,32 @@
 export interface CodeSymbol {
     name: string;
     type: 'class' | 'function' | 'method' | 'variable' | 'interface' | 'type' | 'enum' | 'namespace' | 'module' | 'struct';
-    location: CodeLocation;
+    startLine: number;
+    endLine: number;
     signature?: string;
-    comments?: CommentBlock[];
+    comments?: CommentInterface[];
     decorators?: string[];
     modifiers?: string[]; // public, private, static, etc.
-    parameters?: Parameter[];
+    parameters?: VariableInterface[];
     returnType?: string;
     parentSymbol?: string; // For methods, the parent class name
 }
-
-export interface CodeLocation {
-    filePath: string;
+export interface ObjectInterface {
+    name: string;
     startLine: number;
     endLine: number;
-    startColumn: number;
-    endColumn: number;
 }
-
-export interface CommentBlock {
+export interface CommentInterface {
     content: string;
-    type: 'line' | 'block' | 'doc';
-    location: CodeLocation;
+    startLine: number;
+    endLine: number;
 }
 
-export interface Parameter {
+export interface VariableInterface {
     name: string;
     type?: string;
-    defaultValue?: string;
-    optional?: boolean;
+    startLine: number;
+    endLine: number;
 }
 
 export interface fileMetaData {
@@ -44,7 +41,7 @@ export interface FileAnalysis {
     language: string;
     symbols: CodeSymbol[];
     imports: ImportStatement[];
-    comments: CommentBlock[];
+    comments: CommentInterface[];
     lastModified: Date;
     gitInfo?: GitFileInfo;
 
@@ -53,7 +50,8 @@ export interface FileAnalysis {
 export interface ImportStatement {
     source: string;
     imports: string[];
-    location: CodeLocation;
+    startLine: number;
+    endLine: number;
 }
 
 export interface GitFileInfo {
@@ -70,14 +68,4 @@ export abstract class CodeParser {
 
     abstract parse(content: string, filePath: string): FileAnalysis;
 
-
-    protected createLocation(
-        filePath: string,
-        startLine: number,
-        endLine: number,
-        startColumn: number = 0,
-        endColumn: number = 0
-    ): CodeLocation {
-        return { filePath, startLine, endLine, startColumn, endColumn };
-    }
 }
