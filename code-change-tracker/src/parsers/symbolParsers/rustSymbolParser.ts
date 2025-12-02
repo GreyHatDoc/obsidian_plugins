@@ -71,442 +71,442 @@ import { CodeSymbol } from '../codeParser';
  * Tracks impl block context for method distinction
  */
 interface RustScope extends ScopeContext {
-  isImplBlock?: boolean;
-  implType?: string;  // The type being implemented for
+    isImplBlock?: boolean;
+    implType?: string;  // The type being implemented for
 }
 
 export class RustSymbolParser extends BaseSymbolParser {
-  protected language: string = 'Rust';
+    protected language: string = 'Rust';
 
-  /**
-   * Track current impl block context
-   * Used to determine if we're parsing methods
-   */
-  private implBlockStack: string[] = [];
+    /**
+     * Track current impl block context
+     * Used to determine if we're parsing methods
+     */
+    private implBlockStack: string[] = [];
 
-  /**
-   * Override reset to clear Rust-specific state
-   */
-  public reset(): void {
-    super.reset();
-    this.implBlockStack = [];
-  }
-
-  /**
-   * Extract symbols from a single line of Rust code
-   *
-   * ALGORITHM:
-   * 1. Track brace depth for scope management
-   * 2. Track macro attributes on preceding lines
-   * 3. Detect symbol declarations
-   * 4. Extract generic parameters and where clauses
-   * 5. Build and return completed symbols
-   *
-   * @param line - Source code line
-   * @param lineNumber - 1-indexed line number
-   * @returns Array of completed CodeSymbol objects
-   */
-  public extractSymbolsFromLine(
-    line: string,
-    lineNumber: number
-  ): CodeSymbol[] {
-    const completedSymbols: CodeSymbol[] = [];
-
-    const trimmed = line.trim();
-
-    // Skip empty lines and comments
-    if (this.isEmpty(trimmed) || trimmed.startsWith('//') || trimmed.startsWith('/*')) {
-      this.updateBraceDepth(line);
-      return completedSymbols;
+    /**
+     * Override reset to clear Rust-specific state
+     */
+    public reset(): void {
+        super.reset();
+        this.implBlockStack = [];
     }
 
-    // Update brace depth
-    this.updateBraceDepth(line);
+    /**
+     * Extract symbols from a single line of Rust code
+     *
+     * ALGORITHM:
+     * 1. Track brace depth for scope management
+     * 2. Track macro attributes on preceding lines
+     * 3. Detect symbol declarations
+     * 4. Extract generic parameters and where clauses
+     * 5. Build and return completed symbols
+     *
+     * @param line - Source code line
+     * @param lineNumber - 1-indexed line number
+     * @returns Array of completed CodeSymbol objects
+     */
+    public extractSymbolsFromLine(
+        line: string,
+        lineNumber: number
+    ): CodeSymbol[] {
+        const completedSymbols: CodeSymbol[] = [];
 
-    // Track macro attributes (#[...])
-    if (trimmed.startsWith('#[')) {
-      const decorators = this.extractDecorators(line);
-      this.pendingDecorators.push(...decorators);
-      return completedSymbols;
-    }
+        const trimmed = line.trim();
 
-    // Detect module declaration
-    const modMatch = trimmed.match(/^pub(?:\s*\([^)]*\))?\s+mod\s+([a-z_]\w*)/);
-    const modPrivateMatch = trimmed.match(/^mod\s+([a-z_]\w*)/);
-    const modDecl = modMatch || modPrivateMatch;
-
-    if (modDecl) {
-      const symbol = this.createSymbol(
-        modDecl[1],
-        'namespace',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: this.extractModifiers(trimmed),
-          decorators: [...this.pendingDecorators],
-          parameters: [],
+        // Skip empty lines and comments
+        if (this.isEmpty(trimmed) || trimmed.startsWith('//') || trimmed.startsWith('/*')) {
+            this.updateBraceDepth(line);
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Update brace depth
+        this.updateBraceDepth(line);
 
-      this.scopeStack.push({
-        name: modDecl[1],
-        type: 'namespace',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
-
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
-
-    // Detect struct definition
-    const structMatch = trimmed.match(
-      /^pub(?:\s*\([^)]*\))?\s+struct\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|;|$)/
-    );
-    const structPrivateMatch = trimmed.match(
-      /^struct\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|;|$)/
-    );
-    const structDecl = structMatch || structPrivateMatch;
-
-    if (structDecl) {
-      const generics = this.extractGenerics(trimmed);
-
-      const symbol = this.createSymbol(
-        structDecl[1],
-        'struct',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: this.extractModifiers(trimmed),
-          decorators: [...this.pendingDecorators, ...generics],
-          parameters: [],
+        // Track macro attributes (#[...])
+        if (trimmed.startsWith('#[')) {
+            const decorators = this.extractDecorators(line);
+            this.pendingDecorators.push(...decorators);
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect module declaration
+        const modMatch = trimmed.match(/^pub(?:\s*\([^)]*\))?\s+mod\s+([a-z_]\w*)/);
+        const modPrivateMatch = trimmed.match(/^mod\s+([a-z_]\w*)/);
+        const modDecl = modMatch || modPrivateMatch;
 
-      this.scopeStack.push({
-        name: structDecl[1],
-        type: 'struct',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+        if (modDecl) {
+            const symbol = this.createSymbol(
+                modDecl[1],
+                'namespace',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: this.extractModifiers(trimmed),
+                    decorators: [...this.pendingDecorators],
+                    parameters: [],
+                }
+            );
 
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-    // Detect enum definition
-    const enumMatch = trimmed.match(
-      /^pub(?:\s*\([^)]*\))?\s+enum\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|$)/
-    );
-    const enumPrivateMatch = trimmed.match(
-      /^enum\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|$)/
-    );
-    const enumDecl = enumMatch || enumPrivateMatch;
+            this.scopeStack.push({
+                name: modDecl[1],
+                type: 'namespace',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-    if (enumDecl) {
-      const generics = this.extractGenerics(trimmed);
-
-      const symbol = this.createSymbol(
-        enumDecl[1],
-        'enum',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: this.extractModifiers(trimmed),
-          decorators: [...this.pendingDecorators, ...generics],
-          parameters: [],
+            this.pendingDecorators = [];
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect struct definition
+        const structMatch = trimmed.match(
+            /^pub(?:\s*\([^)]*\))?\s+struct\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|;|$)/
+        );
+        const structPrivateMatch = trimmed.match(
+            /^struct\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|;|$)/
+        );
+        const structDecl = structMatch || structPrivateMatch;
 
-      this.scopeStack.push({
-        name: enumDecl[1],
-        type: 'namespace',  // Map enum to namespace for ScopeContext
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+        if (structDecl) {
+            const generics = this.extractGenerics(trimmed);
 
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
+            const symbol = this.createSymbol(
+                structDecl[1],
+                'struct',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: this.extractModifiers(trimmed),
+                    decorators: [...this.pendingDecorators, ...generics],
+                    parameters: [],
+                }
+            );
 
-    // Detect trait definition
-    const traitMatch = trimmed.match(
-      /^pub(?:\s*\([^)]*\))?\s+trait\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|:)/
-    );
-    const traitPrivateMatch = trimmed.match(
-      /^trait\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|:)/
-    );
-    const traitDecl = traitMatch || traitPrivateMatch;
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-    if (traitDecl) {
-      const generics = this.extractGenerics(trimmed);
+            this.scopeStack.push({
+                name: structDecl[1],
+                type: 'struct',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-      const symbol = this.createSymbol(
-        traitDecl[1],
-        'interface',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: this.extractModifiers(trimmed),
-          decorators: [...this.pendingDecorators, ...generics],
-          parameters: [],
+            this.pendingDecorators = [];
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect enum definition
+        const enumMatch = trimmed.match(
+            /^pub(?:\s*\([^)]*\))?\s+enum\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|$)/
+        );
+        const enumPrivateMatch = trimmed.match(
+            /^enum\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|$)/
+        );
+        const enumDecl = enumMatch || enumPrivateMatch;
 
-      this.scopeStack.push({
-        name: traitDecl[1],
-        type: 'trait',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+        if (enumDecl) {
+            const generics = this.extractGenerics(trimmed);
 
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
+            const symbol = this.createSymbol(
+                enumDecl[1],
+                'enum',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: this.extractModifiers(trimmed),
+                    decorators: [...this.pendingDecorators, ...generics],
+                    parameters: [],
+                }
+            );
 
-    // Detect impl block
-    const implMatch = trimmed.match(
-      /^impl\s*(?:<[^>]+>)?\s+(?:([a-zA-Z_]\w+)\s+for\s+)?([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|$)/
-    );
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-    if (implMatch) {
-      const implType = implMatch[1] ? `${implMatch[1]} for ${implMatch[2]}` : implMatch[2];
-      this.implBlockStack.push(implType);
+            this.scopeStack.push({
+                name: enumDecl[1],
+                type: 'namespace',  // Map enum to namespace for ScopeContext
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-      const symbol = this.createSymbol(
-        `impl ${implType}`,
-        'namespace',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: [],
-          parameters: [],
+            this.pendingDecorators = [];
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect trait definition
+        const traitMatch = trimmed.match(
+            /^pub(?:\s*\([^)]*\))?\s+trait\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|:)/
+        );
+        const traitPrivateMatch = trimmed.match(
+            /^trait\s+([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|:)/
+        );
+        const traitDecl = traitMatch || traitPrivateMatch;
 
-      this.scopeStack.push({
-        name: `impl ${implType}`,
-        type: 'namespace',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+        if (traitDecl) {
+            const generics = this.extractGenerics(trimmed);
 
-      return completedSymbols;
-    }
+            const symbol = this.createSymbol(
+                traitDecl[1],
+                'interface',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: this.extractModifiers(trimmed),
+                    decorators: [...this.pendingDecorators, ...generics],
+                    parameters: [],
+                }
+            );
 
-    // Detect function or method
-    const fnMatch = trimmed.match(
-      /^(?:pub(?:\s*\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?(?:const\s+)?fn\s+([a-z_]\w*)(?:\s*<|(?:\s*\()|$)/
-    );
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-    if (fnMatch) {
-      const isMethod = this.implBlockStack.length > 0;
-      const symbolType = isMethod ? 'method' : 'function';
-      const generics = this.extractGenerics(trimmed);
+            this.scopeStack.push({
+                name: traitDecl[1],
+                type: 'trait',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-      const symbol = this.createSymbol(
-        fnMatch[1],
-        symbolType,
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: this.extractModifiers(trimmed),
-          decorators: [...this.pendingDecorators, ...generics],
-          parameters: this.extractParameters(trimmed),
-          returnType: this.extractReturnType(trimmed, 'rust'),
-          parentSymbol: isMethod
-            ? this.implBlockStack[this.implBlockStack.length - 1]
-            : undefined,
+            this.pendingDecorators = [];
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect impl block
+        const implMatch = trimmed.match(
+            /^impl\s*(?:<[^>]+>)?\s+(?:([a-zA-Z_]\w+)\s+for\s+)?([a-zA-Z_]\w*)(?:\s*<|(?:\s*\{)|$)/
+        );
 
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
+        if (implMatch) {
+            const implType = implMatch[1] ? `${implMatch[1]} for ${implMatch[2]}` : implMatch[2];
+            this.implBlockStack.push(implType);
 
-    // Detect type alias
-    const typeMatch = trimmed.match(/^pub\s+type\s+([a-zA-Z_]\w*)/);
-    const typePrivateMatch = trimmed.match(/^type\s+([a-zA-Z_]\w*)/);
-    const typeDecl = typeMatch || typePrivateMatch;
+            const symbol = this.createSymbol(
+                `impl ${implType}`,
+                'namespace',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: [],
+                    parameters: [],
+                }
+            );
 
-    if (typeDecl) {
-      const generics = this.extractGenerics(trimmed);
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      const symbol = this.createSymbol(
-        typeDecl[1],
-        'type',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: this.extractModifiers(trimmed),
-          decorators: [...this.pendingDecorators, ...generics],
-          returnType: this.extractReturnType(trimmed, 'rust'),
-          parameters: [],
+            this.scopeStack.push({
+                name: `impl ${implType}`,
+                type: 'namespace',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
+
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect function or method
+        const fnMatch = trimmed.match(
+            /^(?:pub(?:\s*\([^)]*\))?\s+)?(?:async\s+)?(?:unsafe\s+)?(?:const\s+)?fn\s+([a-z_]\w*)(?:\s*<|(?:\s*\()|$)/
+        );
 
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
+        if (fnMatch) {
+            const isMethod = this.implBlockStack.length > 0;
+            const symbolType = isMethod ? 'method' : 'function';
+            const generics = this.extractGenerics(trimmed);
 
-    // Detect const declaration
-    const constMatch = trimmed.match(
-      /^pub(?:\s*\([^)]*\))?\s+const\s+([A-Z_]\w*)(?:\s*:|=)/
-    );
-    const constPrivateMatch = trimmed.match(/^const\s+([A-Z_]\w*)(?:\s*:|=)/);
-    const constDecl = constMatch || constPrivateMatch;
+            const symbol = this.createSymbol(
+                fnMatch[1],
+                symbolType,
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: this.extractModifiers(trimmed),
+                    decorators: [...this.pendingDecorators, ...generics],
+                    parameters: this.extractParameters(trimmed),
+                    returnType: this.extractReturnType(trimmed, 'rust'),
+                    parentSymbol: isMethod
+                        ? this.implBlockStack[this.implBlockStack.length - 1]
+                        : undefined,
+                }
+            );
 
-    if (constDecl) {
-      const symbol = this.createSymbol(
-        constDecl[1],
-        'variable',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: [...this.extractModifiers(trimmed), 'const'],
-          decorators: [...this.pendingDecorators],
-          returnType: this.extractReturnType(trimmed, 'rust'),
-          parameters: [],
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
+
+            this.pendingDecorators = [];
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect type alias
+        const typeMatch = trimmed.match(/^pub\s+type\s+([a-zA-Z_]\w*)/);
+        const typePrivateMatch = trimmed.match(/^type\s+([a-zA-Z_]\w*)/);
+        const typeDecl = typeMatch || typePrivateMatch;
 
-      this.pendingDecorators = [];
-      return completedSymbols;
-    }
+        if (typeDecl) {
+            const generics = this.extractGenerics(trimmed);
 
-    // Detect static declaration
-    const staticMatch = trimmed.match(
-      /^pub(?:\s*\([^)]*\))?\s+static\s+(?:mut\s+)?([a-z_]\w*)(?:\s*:|=)/
-    );
-    const staticPrivateMatch = trimmed.match(/^static\s+(?:mut\s+)?([a-z_]\w*)(?:\s*:|=)/);
-    const staticDecl = staticMatch || staticPrivateMatch;
+            const symbol = this.createSymbol(
+                typeDecl[1],
+                'type',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: this.extractModifiers(trimmed),
+                    decorators: [...this.pendingDecorators, ...generics],
+                    returnType: this.extractReturnType(trimmed, 'rust'),
+                    parameters: [],
+                }
+            );
 
-    if (staticDecl) {
-      const modifiers = this.extractModifiers(trimmed);
-      if (trimmed.includes('mut')) {
-        modifiers.push('mut');
-      }
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      const symbol = this.createSymbol(
-        staticDecl[1],
-        'variable',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: [...modifiers, 'static'],
-          decorators: [...this.pendingDecorators],
-          returnType: this.extractReturnType(trimmed, 'rust'),
-          parameters: [],
+            this.pendingDecorators = [];
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect const declaration
+        const constMatch = trimmed.match(
+            /^pub(?:\s*\([^)]*\))?\s+const\s+([A-Z_]\w*)(?:\s*:|=)/
+        );
+        const constPrivateMatch = trimmed.match(/^const\s+([A-Z_]\w*)(?:\s*:|=)/);
+        const constDecl = constMatch || constPrivateMatch;
 
-      this.pendingDecorators = [];
-      return completedSymbols;
+        if (constDecl) {
+            const symbol = this.createSymbol(
+                constDecl[1],
+                'variable',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: [...this.extractModifiers(trimmed), 'const'],
+                    decorators: [...this.pendingDecorators],
+                    returnType: this.extractReturnType(trimmed, 'rust'),
+                    parameters: [],
+                }
+            );
+
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
+
+            this.pendingDecorators = [];
+            return completedSymbols;
+        }
+
+        // Detect static declaration
+        const staticMatch = trimmed.match(
+            /^pub(?:\s*\([^)]*\))?\s+static\s+(?:mut\s+)?([a-z_]\w*)(?:\s*:|=)/
+        );
+        const staticPrivateMatch = trimmed.match(/^static\s+(?:mut\s+)?([a-z_]\w*)(?:\s*:|=)/);
+        const staticDecl = staticMatch || staticPrivateMatch;
+
+        if (staticDecl) {
+            const modifiers = this.extractModifiers(trimmed);
+            if (trimmed.includes('mut')) {
+                modifiers.push('mut');
+            }
+
+            const symbol = this.createSymbol(
+                staticDecl[1],
+                'variable',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: [...modifiers, 'static'],
+                    decorators: [...this.pendingDecorators],
+                    returnType: this.extractReturnType(trimmed, 'rust'),
+                    parameters: [],
+                }
+            );
+
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
+
+            this.pendingDecorators = [];
+            return completedSymbols;
+        }
+
+        return completedSymbols;
     }
 
-    return completedSymbols;
-  }
+    /**
+     * Extract generic parameters from Rust code
+     *
+     * Handles:
+     * - [T]
+     * - ['a]
+     * - [T: Display]
+     * - ['a, T]
+     * - [const N: usize]
+     *
+     * @param signature - Complete or partial signature
+     * @returns Array of generic parameter strings
+     */
+    private extractGenerics(signature: string): string[] {
+        const genericMatch = signature.match(/<([^>]+)>/);
+        if (!genericMatch) {
+            return [];
+        }
 
-  /**
-   * Extract generic parameters from Rust code
-   *
-   * Handles:
-   * - [T]
-   * - ['a]
-   * - [T: Display]
-   * - ['a, T]
-   * - [const N: usize]
-   *
-   * @param signature - Complete or partial signature
-   * @returns Array of generic parameter strings
-   */
-  private extractGenerics(signature: string): string[] {
-    const genericMatch = signature.match(/<([^>]+)>/);
-    if (!genericMatch) {
-      return [];
-    }
+        const params = genericMatch[1];
+        const result: string[] = [];
+        let current = '';
+        let depth = 0;
 
-    const params = genericMatch[1];
-    const result: string[] = [];
-    let current = '';
-    let depth = 0;
+        for (const char of params) {
+            if (char === '<') {
+                depth++;
+                current += char;
+            } else if (char === '>') {
+                depth--;
+                current += char;
+            } else if (char === ',' && depth === 0) {
+                if (current.trim()) {
+                    result.push(current.trim());
+                }
+                current = '';
+            } else {
+                current += char;
+            }
+        }
 
-    for (const char of params) {
-      if (char === '<') {
-        depth++;
-        current += char;
-      } else if (char === '>') {
-        depth--;
-        current += char;
-      } else if (char === ',' && depth === 0) {
         if (current.trim()) {
-          result.push(current.trim());
+            result.push(current.trim());
         }
-        current = '';
-      } else {
-        current += char;
-      }
+
+        return result;
     }
 
-    if (current.trim()) {
-      result.push(current.trim());
+    /**
+     * NOT USED - Rust uses custom detection methods
+     */
+    protected detectSymbolStart(
+        line: string
+    ): { type: CodeSymbol['type']; name: string } | null {
+        return null;
     }
 
-    return result;
-  }
-
-  /**
-   * NOT USED - Rust uses custom detection methods
-   */
-  protected detectSymbolStart(
-    line: string
-  ): { type: CodeSymbol['type']; name: string } | null {
-    return null;
-  }
-
-  /**
-   * NOT USED - Rust uses custom metadata extraction
-   */
-  protected extractSymbolMetadata(
-    signature: string,
-    type: CodeSymbol['type']
-  ): any {
-    return {};
-  }
+    /**
+     * NOT USED - Rust uses custom metadata extraction
+     */
+    protected extractSymbolMetadata(
+        signature: string,
+        type: CodeSymbol['type']
+    ): any {
+        return {};
+    }
 }

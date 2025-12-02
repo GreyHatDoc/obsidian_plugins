@@ -510,15 +510,15 @@ Registry tested with:
 
 ## Code Statistics
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| baseSymbolParser.ts | 578 | Abstract base class |
-| typescriptSymbolParser.ts | 341 | TypeScript implementation |
-| pythonSymbolParser.ts | 420+ | Python implementation |
-| cppSymbolParser.ts | 480+ | C++ implementation |
-| scalaSymbolParser.ts | 400+ | Scala implementation |
-| rustSymbolParser.ts | 450+ | Rust implementation |
-| symbolParserRegistry.ts | 350+ | Registry/factory |
-| symbolExamples.ts | 500+ | Examples/demos |
-| **Total** | **~3,900** | **Complete system** |
+| File                      | Lines      | Purpose                   |
+| ------------------------- | ---------- | ------------------------- |
+| baseSymbolParser.ts       | 578        | Abstract base class       |
+| typescriptSymbolParser.ts | 341        | TypeScript implementation |
+| pythonSymbolParser.ts     | 420+       | Python implementation     |
+| cppSymbolParser.ts        | 480+       | C++ implementation        |
+| scalaSymbolParser.ts      | 400+       | Scala implementation      |
+| rustSymbolParser.ts       | 450+       | Rust implementation       |
+| symbolParserRegistry.ts   | 350+       | Registry/factory          |
+| symbolExamples.ts         | 500+       | Examples/demos            |
+| **Total**                 | **~3,900** | **Complete system**       |
 

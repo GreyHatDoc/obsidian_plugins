@@ -298,22 +298,22 @@ type: 'struct'
 
 ## Language Mappings
 
-| Extension | Language | Parser |
-|-----------|----------|--------|
-| .ts | TypeScript | TypeScriptSymbolParser |
-| .tsx | TypeScript | TypeScriptSymbolParser |
-| .js | TypeScript | TypeScriptSymbolParser |
-| .jsx | TypeScript | TypeScriptSymbolParser |
-| .py | Python | PythonSymbolParser |
-| .cpp | C++ | CppSymbolParser |
-| .h | C++ | CppSymbolParser |
-| .hpp | C++ | CppSymbolParser |
-| .cc | C++ | CppSymbolParser |
-| .cxx | C++ | CppSymbolParser |
-| .c++ | C++ | CppSymbolParser |
-| .hxx | C++ | CppSymbolParser |
-| .scala | Scala | ScalaSymbolParser |
-| .rs | Rust | RustSymbolParser |
+| Extension | Language   | Parser                 |
+| --------- | ---------- | ---------------------- |
+| .ts       | TypeScript | TypeScriptSymbolParser |
+| .tsx      | TypeScript | TypeScriptSymbolParser |
+| .js       | TypeScript | TypeScriptSymbolParser |
+| .jsx      | TypeScript | TypeScriptSymbolParser |
+| .py       | Python     | PythonSymbolParser     |
+| .cpp      | C++        | CppSymbolParser        |
+| .h        | C++        | CppSymbolParser        |
+| .hpp      | C++        | CppSymbolParser        |
+| .cc       | C++        | CppSymbolParser        |
+| .cxx      | C++        | CppSymbolParser        |
+| .c++      | C++        | CppSymbolParser        |
+| .hxx      | C++        | CppSymbolParser        |
+| .scala    | Scala      | ScalaSymbolParser      |
+| .rs       | Rust       | RustSymbolParser       |
 
 ## Advanced Usage
 

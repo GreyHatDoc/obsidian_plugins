@@ -289,157 +289,157 @@ static USERS: &[&str] = &["admin", "user"];
  * Shows how to use SymbolParserRegistry to parse code in different languages
  */
 export function runAllExamples(): void {
-  const registry = SymbolParserRegistry.getInstance();
+    const registry = SymbolParserRegistry.getInstance();
 
-  const examples = [
-    { file: 'example.ts', code: typescriptExample },
-    { file: 'example.py', code: pythonExample },
-    { file: 'example.cpp', code: cppExample },
-    { file: 'example.scala', code: scalaExample },
-    { file: 'example.rs', code: rustExample },
-  ];
+    const examples = [
+        { file: 'example.ts', code: typescriptExample },
+        { file: 'example.py', code: pythonExample },
+        { file: 'example.cpp', code: cppExample },
+        { file: 'example.scala', code: scalaExample },
+        { file: 'example.rs', code: rustExample },
+    ];
 
-  console.log('='.repeat(80));
-  console.log('Symbol Parser Examples');
-  console.log('='.repeat(80));
+    console.log('='.repeat(80));
+    console.log('Symbol Parser Examples');
+    console.log('='.repeat(80));
 
-  for (const example of examples) {
-    const result = registry.parseFile(example.file, example.code);
-    displayParseResult(result);
-  }
+    for (const example of examples) {
+        const result = registry.parseFile(example.file, example.code);
+        displayParseResult(result);
+    }
 
-  displayRegistryStatistics(registry);
+    displayRegistryStatistics(registry);
 }
 
 /**
  * Display parsed symbols from a single file
  */
 function displayParseResult(result: ParseResult): void {
-  console.log(`\\n${'─'.repeat(80)}`);
-  console.log(`File: ${result.filePath}`);
-  console.log(`Language: ${result.language}`);
+    console.log(`\\n${'─'.repeat(80)}`);
+    console.log(`File: ${result.filePath}`);
+    console.log(`Language: ${result.language}`);
 
-  if (result.error) {
-    console.log(`Error: ${result.error}`);
-    return;
-  }
-
-  console.log(`Symbols found: ${result.symbols.length}`);
-  console.log('─'.repeat(80));
-
-  // Group symbols by type
-  const grouped = new Map<string, typeof result.symbols>();
-
-  for (const symbol of result.symbols) {
-    if (!grouped.has(symbol.type)) {
-      grouped.set(symbol.type, []);
+    if (result.error) {
+        console.log(`Error: ${result.error}`);
+        return;
     }
-    grouped.get(symbol.type)!.push(symbol);
-  }
 
-  // Display grouped symbols
-  for (const [type, symbols] of grouped.entries()) {
-    console.log(`\\n${type.toUpperCase()} (${symbols.length}):`);
+    console.log(`Symbols found: ${result.symbols.length}`);
+    console.log('─'.repeat(80));
 
-    for (const symbol of symbols) {
-      const decorators = symbol.decorators?.length
-        ? ` [${symbol.decorators.join(', ')}]`
-        : '';
-      const line = ` Line ${symbol.startLine}: ${symbol.name}${decorators}`;
-      console.log(line);
+    // Group symbols by type
+    const grouped = new Map<string, typeof result.symbols>();
 
-      if (symbol.modifiers?.length) {
-        console.log(`    Modifiers: ${symbol.modifiers.join(', ')}`);
-      }
-
-      if (symbol.parameters?.length) {
-        console.log(`    Parameters: ${symbol.parameters.length}`);
-      }
-
-      if (symbol.returnType) {
-        console.log(`    Returns: ${symbol.returnType}`);
-      }
-
-      if (symbol.parentSymbol) {
-        console.log(`    Parent: ${symbol.parentSymbol}`);
-      }
+    for (const symbol of result.symbols) {
+        if (!grouped.has(symbol.type)) {
+            grouped.set(symbol.type, []);
+        }
+        grouped.get(symbol.type)!.push(symbol);
     }
-  }
+
+    // Display grouped symbols
+    for (const [type, symbols] of grouped.entries()) {
+        console.log(`\\n${type.toUpperCase()} (${symbols.length}):`);
+
+        for (const symbol of symbols) {
+            const decorators = symbol.decorators?.length
+                ? ` [${symbol.decorators.join(', ')}]`
+                : '';
+            const line = ` Line ${symbol.startLine}: ${symbol.name}${decorators}`;
+            console.log(line);
+
+            if (symbol.modifiers?.length) {
+                console.log(`    Modifiers: ${symbol.modifiers.join(', ')}`);
+            }
+
+            if (symbol.parameters?.length) {
+                console.log(`    Parameters: ${symbol.parameters.length}`);
+            }
+
+            if (symbol.returnType) {
+                console.log(`    Returns: ${symbol.returnType}`);
+            }
+
+            if (symbol.parentSymbol) {
+                console.log(`    Parent: ${symbol.parentSymbol}`);
+            }
+        }
+    }
 }
 
 /**
  * Display registry statistics
  */
 function displayRegistryStatistics(registry: SymbolParserRegistry): void {
-  console.log(`\\n${'═'.repeat(80)}`);
-  console.log('Registry Statistics');
-  console.log('═'.repeat(80));
+    console.log(`\\n${'═'.repeat(80)}`);
+    console.log('Registry Statistics');
+    console.log('═'.repeat(80));
 
-  const stats = registry.getStatistics();
-  console.log(`Cached Parsers: ${stats.cachedParsers}`);
-  console.log(`Supported Languages: ${stats.supportedLanguages}`);
-  console.log(`Supported Extensions: ${stats.supportedExtensions}`);
+    const stats = registry.getStatistics();
+    console.log(`Cached Parsers: ${stats.cachedParsers}`);
+    console.log(`Supported Languages: ${stats.supportedLanguages}`);
+    console.log(`Supported Extensions: ${stats.supportedExtensions}`);
 
-  console.log(`\\nSupported Languages:`);
-  for (const lang of registry.getSupportedLanguages()) {
-    console.log(`  - ${lang}`);
-  }
+    console.log(`\\nSupported Languages:`);
+    for (const lang of registry.getSupportedLanguages()) {
+        console.log(`  - ${lang}`);
+    }
 
-  console.log(`\\nSupported Extensions:`);
-  for (const ext of registry.getSupportedExtensions()) {
-    const lang = registry.getLanguageForFile(`file${ext}`);
-    console.log(`  ${ext} → ${lang}`);
-  }
+    console.log(`\\nSupported Extensions:`);
+    for (const ext of registry.getSupportedExtensions()) {
+        const lang = registry.getLanguageForFile(`file${ext}`);
+        console.log(`  ${ext} → ${lang}`);
+    }
 }
 
 /**
  * Example: Parse TypeScript file
  */
 export function parseTypeScriptFile(content: string): ParseResult {
-  const registry = SymbolParserRegistry.getInstance();
-  return registry.parseFile('app.ts', content);
+    const registry = SymbolParserRegistry.getInstance();
+    return registry.parseFile('app.ts', content);
 }
 
 /**
  * Example: Parse Python file
  */
 export function parsePythonFile(content: string): ParseResult {
-  const registry = SymbolParserRegistry.getInstance();
-  return registry.parseFile('app.py', content);
+    const registry = SymbolParserRegistry.getInstance();
+    return registry.parseFile('app.py', content);
 }
 
 /**
  * Example: Parse C++ file
  */
 export function parseCppFile(content: string): ParseResult {
-  const registry = SymbolParserRegistry.getInstance();
-  return registry.parseFile('app.cpp', content);
+    const registry = SymbolParserRegistry.getInstance();
+    return registry.parseFile('app.cpp', content);
 }
 
 /**
  * Example: Parse Scala file
  */
 export function parseScalaFile(content: string): ParseResult {
-  const registry = SymbolParserRegistry.getInstance();
-  return registry.parseFile('App.scala', content);
+    const registry = SymbolParserRegistry.getInstance();
+    return registry.parseFile('App.scala', content);
 }
 
 /**
  * Example: Parse Rust file
  */
 export function parseRustFile(content: string): ParseResult {
-  const registry = SymbolParserRegistry.getInstance();
-  return registry.parseFile('main.rs', content);
+    const registry = SymbolParserRegistry.getInstance();
+    return registry.parseFile('main.rs', content);
 }
 
 /**
  * Example: Parse multiple files
  */
 export function parseMultipleFiles(files: Map<string, string>): ParseResult[] {
-  const registry = SymbolParserRegistry.getInstance();
-  const fileArray = Array.from(files.entries()).map(([filePath, content]) => ({
-    filePath,
-    content,
-  }));
-  return registry.parseMultipleFiles(fileArray);
+    const registry = SymbolParserRegistry.getInstance();
+    const fileArray = Array.from(files.entries()).map(([filePath, content]) => ({
+        filePath,
+        content,
+    }));
+    return registry.parseMultipleFiles(fileArray);
 }

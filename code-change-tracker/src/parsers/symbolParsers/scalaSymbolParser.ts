@@ -60,364 +60,364 @@ import { BaseSymbolParser, ScopeContext } from './baseSymbolParser';
 import { CodeSymbol } from '../codeParser';
 
 export class ScalaSymbolParser extends BaseSymbolParser {
-  protected language: string = 'Scala';
+    protected language: string = 'Scala';
 
-  /**
-   * Track if we're inside an object, class, or trait
-   */
-  private insideContainer: 'class' | 'object' | 'trait' | undefined = undefined;
+    /**
+     * Track if we're inside an object, class, or trait
+     */
+    private insideContainer: 'class' | 'object' | 'trait' | undefined = undefined;
 
-  /**
-   * Override reset to clear Scala-specific state
-   */
-  public reset(): void {
-    super.reset();
-    this.insideContainer = undefined;
-  }
-
-  /**
-   * Extract symbols from a single line of Scala code
-   *
-   * ALGORITHM:
-   * 1. Track brace depth for scope management
-   * 2. Check for symbol declarations
-   * 3. Extract type parameters and modifiers
-   * 4. Build and return completed symbols
-   *
-   * @param line - Source code line
-   * @param lineNumber - 1-indexed line number
-   * @returns Array of completed CodeSymbol objects
-   */
-  public extractSymbolsFromLine(
-    line: string,
-    lineNumber: number
-  ): CodeSymbol[] {
-    const completedSymbols: CodeSymbol[] = [];
-
-    const trimmed = line.trim();
-
-    // Skip empty lines and comments
-    if (this.isEmpty(trimmed) || trimmed.startsWith('//') || trimmed.startsWith('/*')) {
-      this.updateBraceDepth(line);
-      return completedSymbols;
+    /**
+     * Override reset to clear Scala-specific state
+     */
+    public reset(): void {
+        super.reset();
+        this.insideContainer = undefined;
     }
 
-    // Update brace depth
-    this.updateBraceDepth(line);
+    /**
+     * Extract symbols from a single line of Scala code
+     *
+     * ALGORITHM:
+     * 1. Track brace depth for scope management
+     * 2. Check for symbol declarations
+     * 3. Extract type parameters and modifiers
+     * 4. Build and return completed symbols
+     *
+     * @param line - Source code line
+     * @param lineNumber - 1-indexed line number
+     * @returns Array of completed CodeSymbol objects
+     */
+    public extractSymbolsFromLine(
+        line: string,
+        lineNumber: number
+    ): CodeSymbol[] {
+        const completedSymbols: CodeSymbol[] = [];
 
-    // Detect package declaration
-    if (trimmed.startsWith('package ')) {
-      const packageMatch = trimmed.match(/^package\s+([\w.]+)/);
-      if (packageMatch) {
-        const symbol = this.createSymbol(
-          packageMatch[1],
-          'namespace',
-          lineNumber,
-          lineNumber,
-          trimmed,
-          {
-            modifiers: [],
-            parameters: [],
-          }
+        const trimmed = line.trim();
+
+        // Skip empty lines and comments
+        if (this.isEmpty(trimmed) || trimmed.startsWith('//') || trimmed.startsWith('/*')) {
+            this.updateBraceDepth(line);
+            return completedSymbols;
+        }
+
+        // Update brace depth
+        this.updateBraceDepth(line);
+
+        // Detect package declaration
+        if (trimmed.startsWith('package ')) {
+            const packageMatch = trimmed.match(/^package\s+([\w.]+)/);
+            if (packageMatch) {
+                const symbol = this.createSymbol(
+                    packageMatch[1],
+                    'namespace',
+                    lineNumber,
+                    lineNumber,
+                    trimmed,
+                    {
+                        modifiers: [],
+                        parameters: [],
+                    }
+                );
+
+                completedSymbols.push(symbol);
+                this.completedSymbols.push(symbol);
+            }
+
+            return completedSymbols;
+        }
+
+        // Track modifiers and visibility
+        const isImplicit = trimmed.startsWith('implicit ');
+        const modifiers = this.extractModifiers(trimmed);
+
+        // Detect class declaration
+        const classMatch = trimmed.match(
+            /^(?:case\s+)?class\s+([a-zA-Z_]\w*)(?:\s*\[|(?:\s*\()|$|:)/
         );
+        if (classMatch) {
+            const isCaseClass = trimmed.includes('case class');
+            const typeParams = this.extractTypeParameters(line);
 
-        completedSymbols.push(symbol);
-        this.completedSymbols.push(symbol);
-      }
+            const symbol = this.createSymbol(
+                classMatch[1],
+                'class',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: isCaseClass
+                        ? [...modifiers, 'case']
+                        : modifiers,
+                    decorators: typeParams,
+                    parameters: this.extractParameters(trimmed),
+                }
+            );
 
-      return completedSymbols;
-    }
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-    // Track modifiers and visibility
-    const isImplicit = trimmed.startsWith('implicit ');
-    const modifiers = this.extractModifiers(trimmed);
+            this.scopeStack.push({
+                name: classMatch[1],
+                type: 'class',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-    // Detect class declaration
-    const classMatch = trimmed.match(
-      /^(?:case\s+)?class\s+([a-zA-Z_]\w*)(?:\s*\[|(?:\s*\()|$|:)/
-    );
-    if (classMatch) {
-      const isCaseClass = trimmed.includes('case class');
-      const typeParams = this.extractTypeParameters(line);
+            this.insideContainer = 'class';
 
-      const symbol = this.createSymbol(
-        classMatch[1],
-        'class',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: isCaseClass
-            ? [...modifiers, 'case']
-            : modifiers,
-          decorators: typeParams,
-          parameters: this.extractParameters(trimmed),
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect trait declaration
+        const traitMatch = trimmed.match(
+            /^trait\s+([a-zA-Z_]\w*)(?:\s*\[|(?:\s+extends)|$|:)/
+        );
+        if (traitMatch) {
+            const typeParams = this.extractTypeParameters(line);
 
-      this.scopeStack.push({
-        name: classMatch[1],
-        type: 'class',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+            const symbol = this.createSymbol(
+                traitMatch[1],
+                'interface',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers,
+                    decorators: typeParams,
+                    parameters: [],
+                }
+            );
 
-      this.insideContainer = 'class';
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      return completedSymbols;
-    }
+            this.scopeStack.push({
+                name: traitMatch[1],
+                type: 'trait',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-    // Detect trait declaration
-    const traitMatch = trimmed.match(
-      /^trait\s+([a-zA-Z_]\w*)(?:\s*\[|(?:\s+extends)|$|:)/
-    );
-    if (traitMatch) {
-      const typeParams = this.extractTypeParameters(line);
+            this.insideContainer = 'trait';
 
-      const symbol = this.createSymbol(
-        traitMatch[1],
-        'interface',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers,
-          decorators: typeParams,
-          parameters: [],
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect object declaration (singleton/module)
+        const objectMatch = trimmed.match(
+            /^(?:case\s+)?object\s+([a-zA-Z_]\w*)(?:\s*extends|\s*\{|$|:)/
+        );
+        if (objectMatch) {
+            const isCaseObject = trimmed.includes('case object');
 
-      this.scopeStack.push({
-        name: traitMatch[1],
-        type: 'trait',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+            const symbol = this.createSymbol(
+                objectMatch[1],
+                'module',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: isCaseObject
+                        ? [...modifiers, 'case']
+                        : modifiers,
+                    parameters: [],
+                }
+            );
 
-      this.insideContainer = 'trait';
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      return completedSymbols;
-    }
+            this.scopeStack.push({
+                name: objectMatch[1],
+                type: 'module',
+                braceDepth: this.braceDepth,
+                indentation: 0,
+            });
 
-    // Detect object declaration (singleton/module)
-    const objectMatch = trimmed.match(
-      /^(?:case\s+)?object\s+([a-zA-Z_]\w*)(?:\s*extends|\s*\{|$|:)/
-    );
-    if (objectMatch) {
-      const isCaseObject = trimmed.includes('case object');
+            this.insideContainer = 'object';
 
-      const symbol = this.createSymbol(
-        objectMatch[1],
-        'module',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: isCaseObject
-            ? [...modifiers, 'case']
-            : modifiers,
-          parameters: [],
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect type alias
+        const typeAliasMatch = trimmed.match(
+            /^type\s+([a-zA-Z_]\w*)(?:\s*\[|=|\s*<:)/
+        );
+        if (typeAliasMatch) {
+            const symbol = this.createSymbol(
+                typeAliasMatch[1],
+                'type',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers,
+                    parameters: [],
+                    returnType: this.extractReturnType(trimmed, 'scala'),
+                }
+            );
 
-      this.scopeStack.push({
-        name: objectMatch[1],
-        type: 'module',
-        braceDepth: this.braceDepth,
-        indentation: 0,
-      });
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      this.insideContainer = 'object';
-
-      return completedSymbols;
-    }
-
-    // Detect type alias
-    const typeAliasMatch = trimmed.match(
-      /^type\s+([a-zA-Z_]\w*)(?:\s*\[|=|\s*<:)/
-    );
-    if (typeAliasMatch) {
-      const symbol = this.createSymbol(
-        typeAliasMatch[1],
-        'type',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers,
-          parameters: [],
-          returnType: this.extractReturnType(trimmed, 'scala'),
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect function/method declaration (def)
+        const defMatch = trimmed.match(
+            /^(?:implicit\s+)?def\s+([a-zA-Z_]\w+|\+|-|\*|\/|%|==|!=|<|>|<=|>=|&|\||\^|~)(?:\s*\[|(?:\s*\()|$)/
+        );
+        if (defMatch) {
+            const isMethod = this.isInsideContainer();
+            const symbolType = isMethod ? 'method' : 'function';
+            const typeParams = this.extractTypeParameters(line);
 
-      return completedSymbols;
-    }
+            const newModifiers = isImplicit ? [...modifiers, 'implicit'] : modifiers;
 
-    // Detect function/method declaration (def)
-    const defMatch = trimmed.match(
-      /^(?:implicit\s+)?def\s+([a-zA-Z_]\w+|\+|-|\*|\/|%|==|!=|<|>|<=|>=|&|\||\^|~)(?:\s*\[|(?:\s*\()|$)/
-    );
-    if (defMatch) {
-      const isMethod = this.isInsideContainer();
-      const symbolType = isMethod ? 'method' : 'function';
-      const typeParams = this.extractTypeParameters(line);
+            const symbol = this.createSymbol(
+                defMatch[1],
+                symbolType,
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: newModifiers,
+                    decorators: typeParams,
+                    parameters: this.extractParameters(trimmed),
+                    returnType: this.extractReturnType(trimmed, 'scala'),
+                    parentSymbol: isMethod
+                        ? this.scopeStack[this.scopeStack.length - 1]?.name
+                        : undefined,
+                }
+            );
 
-      const newModifiers = isImplicit ? [...modifiers, 'implicit'] : modifiers;
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      const symbol = this.createSymbol(
-        defMatch[1],
-        symbolType,
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: newModifiers,
-          decorators: typeParams,
-          parameters: this.extractParameters(trimmed),
-          returnType: this.extractReturnType(trimmed, 'scala'),
-          parentSymbol: isMethod
-            ? this.scopeStack[this.scopeStack.length - 1]?.name
-            : undefined,
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
+        // Detect variable/value declaration (val, var, lazy val)
+        const varMatch = trimmed.match(
+            /^(?:lazy\s+)?(val|var)\s+([a-zA-Z_]\w*)(?:\s*:|=|$)/
+        );
+        if (varMatch && this.isModuleOrContainerLevel()) {
+            const isLazy = trimmed.includes('lazy ');
+            const kind = varMatch[1];
+            const varModifiers = isLazy ? [...modifiers, 'lazy'] : modifiers;
 
-      return completedSymbols;
-    }
+            if (isImplicit) {
+                varModifiers.push('implicit');
+            }
 
-    // Detect variable/value declaration (val, var, lazy val)
-    const varMatch = trimmed.match(
-      /^(?:lazy\s+)?(val|var)\s+([a-zA-Z_]\w*)(?:\s*:|=|$)/
-    );
-    if (varMatch && this.isModuleOrContainerLevel()) {
-      const isLazy = trimmed.includes('lazy ');
-      const kind = varMatch[1];
-      const varModifiers = isLazy ? [...modifiers, 'lazy'] : modifiers;
+            const symbol = this.createSymbol(
+                varMatch[2],
+                'variable',
+                lineNumber,
+                lineNumber,
+                trimmed,
+                {
+                    modifiers: varModifiers,
+                    returnType: this.extractReturnType(trimmed, 'scala'),
+                    parameters: [],
+                }
+            );
 
-      if (isImplicit) {
-        varModifiers.push('implicit');
-      }
+            completedSymbols.push(symbol);
+            this.completedSymbols.push(symbol);
 
-      const symbol = this.createSymbol(
-        varMatch[2],
-        'variable',
-        lineNumber,
-        lineNumber,
-        trimmed,
-        {
-          modifiers: varModifiers,
-          returnType: this.extractReturnType(trimmed, 'scala'),
-          parameters: [],
+            return completedSymbols;
         }
-      );
 
-      completedSymbols.push(symbol);
-      this.completedSymbols.push(symbol);
-
-      return completedSymbols;
+        return completedSymbols;
     }
 
-    return completedSymbols;
-  }
+    /**
+     * Extract type parameters from Scala code
+     *
+     * Handles:
+     * - [T]
+     * - [T <: Base]
+     * - [T >: Base]
+     * - [T: Manifest]
+     * - [A, B, C]
+     *
+     * @param signature - Complete or partial signature
+     * @returns Array of type parameter strings
+     */
+    private extractTypeParameters(signature: string): string[] {
+        const typeParamMatch = signature.match(/\[([^\]]+)\]/);
+        if (!typeParamMatch) {
+            return [];
+        }
 
-  /**
-   * Extract type parameters from Scala code
-   *
-   * Handles:
-   * - [T]
-   * - [T <: Base]
-   * - [T >: Base]
-   * - [T: Manifest]
-   * - [A, B, C]
-   *
-   * @param signature - Complete or partial signature
-   * @returns Array of type parameter strings
-   */
-  private extractTypeParameters(signature: string): string[] {
-    const typeParamMatch = signature.match(/\[([^\]]+)\]/);
-    if (!typeParamMatch) {
-      return [];
-    }
+        const params = typeParamMatch[1];
+        // Split by comma, but not inside nested brackets
+        const result: string[] = [];
+        let current = '';
+        let depth = 0;
 
-    const params = typeParamMatch[1];
-    // Split by comma, but not inside nested brackets
-    const result: string[] = [];
-    let current = '';
-    let depth = 0;
+        for (const char of params) {
+            if (char === '[') {
+                depth++;
+                current += char;
+            } else if (char === ']') {
+                depth--;
+                current += char;
+            } else if (char === ',' && depth === 0) {
+                if (current.trim()) {
+                    result.push(current.trim());
+                }
+                current = '';
+            } else {
+                current += char;
+            }
+        }
 
-    for (const char of params) {
-      if (char === '[') {
-        depth++;
-        current += char;
-      } else if (char === ']') {
-        depth--;
-        current += char;
-      } else if (char === ',' && depth === 0) {
         if (current.trim()) {
-          result.push(current.trim());
+            result.push(current.trim());
         }
-        current = '';
-      } else {
-        current += char;
-      }
+
+        return result;
     }
 
-    if (current.trim()) {
-      result.push(current.trim());
+    /**
+     * Check if we're inside a container (class, object, or trait)
+     *
+     * @returns true if inside any container
+     */
+    private isInsideContainer(): boolean {
+        return this.insideContainer !== undefined;
     }
 
-    return result;
-  }
+    /**
+     * Check if we're at module or container level (not nested)
+     *
+     * @returns true if at top level or inside class/object
+     */
+    private isModuleOrContainerLevel(): boolean {
+        // Only track top-level values, not nested ones
+        return this.scopeStack.length <= 1;
+    }
 
-  /**
-   * Check if we're inside a container (class, object, or trait)
-   *
-   * @returns true if inside any container
-   */
-  private isInsideContainer(): boolean {
-    return this.insideContainer !== undefined;
-  }
+    /**
+     * NOT USED - Scala uses custom detection methods
+     */
+    protected detectSymbolStart(
+        line: string
+    ): { type: CodeSymbol['type']; name: string } | null {
+        return null;
+    }
 
-  /**
-   * Check if we're at module or container level (not nested)
-   *
-   * @returns true if at top level or inside class/object
-   */
-  private isModuleOrContainerLevel(): boolean {
-    // Only track top-level values, not nested ones
-    return this.scopeStack.length <= 1;
-  }
-
-  /**
-   * NOT USED - Scala uses custom detection methods
-   */
-  protected detectSymbolStart(
-    line: string
-  ): { type: CodeSymbol['type']; name: string } | null {
-    return null;
-  }
-
-  /**
-   * NOT USED - Scala uses custom metadata extraction
-   */
-  protected extractSymbolMetadata(
-    signature: string,
-    type: CodeSymbol['type']
-  ): any {
-    return {};
-  }
+    /**
+     * NOT USED - Scala uses custom metadata extraction
+     */
+    protected extractSymbolMetadata(
+        signature: string,
+        type: CodeSymbol['type']
+    ): any {
+        return {};
+    }
 }

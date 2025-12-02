@@ -16,18 +16,18 @@ A comprehensive, language-agnostic code symbol extraction system that parses sou
 
 The parser recognizes the following code symbol types via the `CodeSymbol` interface:
 
-| Type | Description | Languages |
-|------|-------------|-----------|
-| `class` | Class definition | TS, Py, C++, Scala, Rust |
-| `function` | Top-level function | TS, Py, C++, Scala, Rust |
-| `method` | Function inside class/struct | TS, Py, C++, Scala, Rust |
-| `variable` | Variable/constant declaration | TS, Py, C++, Scala, Rust |
+| Type        | Description                   | Languages                   |
+| ----------- | ----------------------------- | --------------------------- |
+| `class`     | Class definition              | TS, Py, C++, Scala, Rust    |
+| `function`  | Top-level function            | TS, Py, C++, Scala, Rust    |
+| `method`    | Function inside class/struct  | TS, Py, C++, Scala, Rust    |
+| `variable`  | Variable/constant declaration | TS, Py, C++, Scala, Rust    |
 | `interface` | Interface/protocol definition | TS, Py*, C++*, Scala*, Rust |
-| `type` | Type alias definition | TS, Scala, Rust |
-| `enum` | Enumeration definition | TS, C++, Scala, Rust |
-| `namespace` | Namespace/package/module | TS, C++, Scala, Rust |
-| `module` | Module/object definition | TS, Scala, Rust |
-| `struct` | Struct definition | C++, Rust |
+| `type`      | Type alias definition         | TS, Scala, Rust             |
+| `enum`      | Enumeration definition        | TS, C++, Scala, Rust        |
+| `namespace` | Namespace/package/module      | TS, C++, Scala, Rust        |
+| `module`    | Module/object definition      | TS, Scala, Rust             |
+| `struct`    | Struct definition             | C++, Rust                   |
 
 *Note: Some languages map similar constructs (e.g., Python's ABC to interface, C++ templates to interfaces)*
 
@@ -171,13 +171,13 @@ This line-by-line approach enables:
 
 Different languages use different scope mechanisms:
 
-| Language | Scope Indicator | Method |
-|----------|-----------------|--------|
-| TypeScript | Braces `{ }` | Brace depth counting |
-| Python | Indentation | Indentation level tracking |
-| C++ | Braces `{ }` | Brace depth counting |
-| Scala | Braces `{ }` | Brace depth counting |
-| Rust | Braces `{ }` | Brace depth counting |
+| Language   | Scope Indicator | Method                     |
+| ---------- | --------------- | -------------------------- |
+| TypeScript | Braces `{ }`    | Brace depth counting       |
+| Python     | Indentation     | Indentation level tracking |
+| C++        | Braces `{ }`    | Brace depth counting       |
+| Scala      | Braces `{ }`    | Brace depth counting       |
+| Rust       | Braces `{ }`    | Brace depth counting       |
 
 Each parser's base class handles the appropriate scope tracking method.
 
